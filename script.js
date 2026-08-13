@@ -1,5 +1,5 @@
 // ======== LINK DO MODELO ========
-const URL = "https://teachablemachine.withgoogle.com/models/UwhLPOt-h/";
+const URL = "https://teachablemachine.withgoogle.com/models/d1OE97UJY/";
 
 // ======== VARIÁVEIS ========
 let model;
@@ -134,10 +134,25 @@ async function predict() {
 
         let comando = "";
 
-        if (classe == "rosto") {
+        if (classe == "magica da flor
+") {
             comando = "1";
         }
-    
+            if (classe == "magica da bola
+") {
+            comando = "2";
+        }
+        if (classe == "magica do lenço
+") {
+            comando = "3";
+        }
+     }
+        if (classe == "recomeço
+") {
+            comando = "4";
+        }
+
+
 
         if (comando != "") {
             console.log("Enviando:", comando);
