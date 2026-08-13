@@ -1,7 +1,9 @@
-// ======== LINK DO MODELO ========
 const URL = "https://teachablemachine.withgoogle.com/models/d1OE97UJY/";
 
-// ======== VARIÁVEIS ========
+// ===============================
+// VARIÁVEIS
+// ===============================
+
 let model;
 let webcam;
 let labelContainer;
@@ -11,13 +13,49 @@ let port = null;
 let writer = null;
 
 let ultimaClasse = "";
+let cameraLigada = false;
+
+// ===============================
+// ELEMENTOS DA PÁGINA
+// ===============================
+
+const webcamContainer = document.getElementById("webcam-container");
+const labelContainerElement = document.getElementById("label-container");
+const resultado = document.getElementById("resultado");
+const status = document.getElementById("status");
+
+// ===============================
+// STATUS
+// ===============================
+
+function mostrarStatus(texto) {
+
+    if (status) {
+        status.innerHTML = texto;
+    }
+
+    console.log(texto);
+}
 
 // ===============================
 // CONECTAR ARDUINO
 // ===============================
+
 async function connectArduino() {
 
+    if (!("serial" in navigator)) {
+
+        alert(
+            "Seu navegador não suporta Web Serial.\n\n" +
+            "Use o Google Chrome ou Microsoft Edge."
+        );
+
+        return;
+    }
+
     try {
+
+        mostrarStatus("🔌 Escolha o Arduino na janela que apareceu...");
 
         port = await navigator.serial.requestPort();
 
@@ -27,131 +65,345 @@ async function connectArduino() {
 
         writer = port.writable.getWriter();
 
-        alert("Arduino conectado!");
+        mostrarStatus("🟢 Arduino conectado!");
+
+        alert("Arduino conectado com sucesso!");
 
     } catch (erro) {
 
-        console.log(erro);
+        console.error("Erro ao conectar Arduino:", erro);
 
-        alert("Não foi possível conectar ao Arduino.");
+        mostrarStatus("🔴 Erro ao conectar Arduino.");
 
+        alert(
+            "Não foi possível conectar ao Arduino.\n\n" +
+            "Verifique se ele está conectado ao computador."
+        );
     }
-
 }
 
 // ===============================
-// ENVIAR DADOS
+// DESCONECTAR ARDUINO
 // ===============================
+
+async function disconnectArduino() {
+
+    try {
+
+        if (writer) {
+            writer.releaseLock();
+            writer = null;
+        }
+
+        if (port) {
+            await port.close();
+            port = null;
+        }
+
+        mostrarStatus("🟡 Arduino desconectado.");
+
+    } catch (erro) {
+
+        console.error("Erro ao desconectar Arduino:", erro);
+
+    }
+}
+
+// ===============================
+// ENVIAR DADOS PARA ARDUINO
+// ===============================
+
 async function enviarArduino(valor) {
 
-    if (!writer) return;
+    if (!writer) {
 
-    const encoder = new TextEncoder();
+        console.log(
+            "Arduino não conectado. Comando não enviado:",
+            valor
+        );
 
-    await writer.write(encoder.encode(valor));
+        return;
+    }
 
+    try {
+
+        const encoder = new TextEncoder();
+
+        await writer.write(
+            encoder.encode(valor)
+        );
+
+        console.log("Arduino recebeu:", valor);
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao enviar para Arduino:",
+            erro
+        );
+
+        mostrarStatus("🔴 Erro ao enviar comando para o Arduino.");
+    }
 }
 
 // ===============================
-// INICIAR
+// INICIAR CÂMERA E MODELO
 // ===============================
+
 async function init() {
 
-    const modelURL = URL + "model.json";
-    const metadataURL = URL + "metadata.json";
+    try {
 
-    model = await tmImage.load(modelURL, metadataURL);
+        mostrarStatus("⏳ Carregando modelo...");
 
-    maxPredictions = model.getTotalClasses();
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
 
-    webcam = new tmImage.Webcam(320,320,true);
+        model = await tmImage.load(
+            modelURL,
+            metadataURL
+        );
 
-    await webcam.setup();
+        maxPredictions =
+            model.getTotalClasses();
 
-    await webcam.play();
+        console.log(
+            "Modelo carregado.",
+            "Classes:",
+            maxPredictions
+        );
 
-    document.getElementById("webcam-container").innerHTML = "";
+        // ===============================
+        // CONFIGURAR WEBCAM
+        // ===============================
 
-    document.getElementById("webcam-container").appendChild(webcam.canvas);
+        mostrarStatus("📷 Pedindo permissão para usar a câmera...");
 
-    labelContainer = document.getElementById("label-container");
+        webcam = new tmImage.Webcam(
+            320,
+            320,
+            true
+        );
 
-    labelContainer.innerHTML = "";
+        await webcam.setup();
 
-    for(let i=0;i<maxPredictions;i++){
+        await webcam.play();
 
-        labelContainer.appendChild(document.createElement("div"));
+        cameraLigada = true;
 
+        console.log("Câmera ligada!");
+
+        // ===============================
+        // MOSTRAR CÂMERA
+        // ===============================
+
+        webcamContainer.innerHTML = "";
+
+        webcamContainer.appendChild(
+            webcam.canvas
+        );
+
+        // ===============================
+        // CRIAR ÁREA DAS CLASSES
+        // ===============================
+
+        labelContainerElement.innerHTML = "";
+
+        labelContainer = labelContainerElement;
+
+        for (
+            let i = 0;
+            i < maxPredictions;
+            i++
+        ) {
+
+            const div =
+                document.createElement("div");
+
+            labelContainer.appendChild(div);
+        }
+
+        mostrarStatus("🟢 Câmera funcionando! Modelo pronto.");
+
+        // ===============================
+        // COMEÇAR LOOP
+        // ===============================
+
+        window.requestAnimationFrame(loop);
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao iniciar câmera/modelo:",
+            erro
+        );
+
+        cameraLigada = false;
+
+        mostrarStatus(
+            "🔴 Não foi possível iniciar a câmera."
+        );
+
+        alert(
+            "Não foi possível iniciar a câmera.\n\n" +
+            "Verifique se você permitiu o acesso à câmera " +
+            "e se está usando Chrome ou Edge."
+        );
     }
-
-    window.requestAnimationFrame(loop);
-
 }
 
 // ===============================
 // LOOP
 // ===============================
-async function loop(){
+
+async function loop() {
+
+    if (!cameraLigada || !webcam) {
+        return;
+    }
 
     webcam.update();
 
     await predict();
 
     window.requestAnimationFrame(loop);
-
 }
 
 // ===============================
 // PREDIÇÃO
 // ===============================
+
 async function predict() {
 
-    const prediction = await model.predict(webcam.canvas);
-
-    let maior = 0;
-    let classe = "";
-
-    for (let i = 0; i < prediction.length; i++) {
-
-        const p = prediction[i];
-
-        labelContainer.childNodes[i].innerHTML =
-            p.className + " : " + (p.probability * 100).toFixed(1) + "%";
-
-        if (p.probability > maior) {
-            maior = p.probability;
-            classe = p.className;
-        }
+    if (!model || !webcam) {
+        return;
     }
 
-    document.getElementById("resultado").innerHTML =
-        "Classe: " + classe +
-        "<br>Confiança: " + (maior * 100).toFixed(1) + "%";
+    try {
 
-    // Só envia se a confiança for maior que 90%
-    // e se for uma classe diferente da anterior
-    if (maior > 0.90 && classe !== ultimaClasse) {
+        const prediction =
+            await model.predict(
+                webcam.canvas
+            );
 
-        ultimaClasse = classe;
+        let maior = 0;
+        let classe = "";
 
-        let comando = "";
+        // ===============================
+        // VERIFICAR TODAS AS CLASSES
+        // ===============================
 
-        if (classe === "magica da flor") {
-            comando = "1";
-        }
-        else if (classe === "magica da bola") {
-            comando = "2";
-        }
-        else if (classe === "magica do lenço") {
-            comando = "3";
-        }
-        else if (classe === "recomeço") {
-            comando = "4";
+        for (
+            let i = 0;
+            i < prediction.length;
+            i++
+        ) {
+
+            const p = prediction[i];
+
+            const porcentagem =
+                (p.probability * 100).toFixed(1);
+
+            if (
+                labelContainer &&
+                labelContainer.childNodes[i]
+            ) {
+
+                labelContainer.childNodes[i].innerHTML =
+                    p.className +
+                    " : " +
+                    porcentagem +
+                    "%";
+            }
+
+            if (
+                p.probability > maior
+            ) {
+
+                maior = p.probability;
+
+                classe = p.className;
+            }
         }
 
-        if (comando !== "") {
-            console.log("Enviando:", comando);
-            await enviarArduino(comando + "\n");
+        // ===============================
+        // MOSTRAR RESULTADO
+        // ===============================
+
+        if (resultado) {
+
+            resultado.innerHTML =
+                "Classe: " +
+                classe +
+                "<br>Confiança: " +
+                (maior * 100).toFixed(1) +
+                "%";
         }
+
+        // ===============================
+        // SÓ ACEITA ACIMA DE 90%
+        // ===============================
+
+        if (
+            maior > 0.90 &&
+            classe !== ultimaClasse
+        ) {
+
+            ultimaClasse = classe;
+
+            let comando = "";
+
+            // ===============================
+            // CLASSES → COMANDOS
+            // ===============================
+
+            if (classe === "magica da flor") {
+
+                comando = "1";
+            }
+
+            else if (classe === "magica da bola") {
+
+                comando = "2";
+            }
+
+            else if (classe === "magica do lenço") {
+
+                comando = "3";
+            }
+
+            else if (classe === "recomeço") {
+
+                comando = "4";
+            }
+
+            // ===============================
+            // ENVIAR PARA ARDUINO
+            // ===============================
+
+            if (comando !== "") {
+
+                console.log(
+                    "Classe detectada:",
+                    classe
+                );
+
+                console.log(
+                    "Comando enviado:",
+                    comando
+                );
+
+                await enviarArduino(
+                    comando + "\n"
+                );
+            }
+        }
+
+    } catch (erro) {
+
+        console.error(
+            "Erro na previsão:",
+            erro
+        );
     }
 }
