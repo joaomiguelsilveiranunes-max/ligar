@@ -1,308 +1,337 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
+body {
+    font-family: Arial, Helvetica, sans-serif;
 
-    font-family:Arial, Helvetica, sans-serif;
+    background:
+        linear-gradient(
+            135deg,
+            #0f172a,
+            #1e293b
+        );
 
-    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color: white;
 
-    color:white;
-
-    min-height:100vh;
-
+    min-height: 100vh;
 }
 
-header{
 
-    text-align:center;
+/* =========================
+   CABEÇALHO
+========================= */
 
-    padding:30px;
-
+header {
+    text-align: center;
+    padding: 30px;
 }
 
-header h1{
-
-    font-size:42px;
-
-    margin-bottom:10px;
-
+header h1 {
+    font-size: 42px;
+    margin-bottom: 10px;
 }
 
-header p{
-
-    color:#cbd5e1;
-
-    font-size:18px;
-
+header p {
+    color: #cbd5e1;
+    font-size: 18px;
 }
 
-.botoes{
 
-    display:flex;
+/* =========================
+   BOTÕES
+========================= */
 
-    justify-content:center;
-
-    gap:20px;
-
-    margin-top:20px;
-
-    flex-wrap:wrap;
-
+.botoes {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
 }
 
-button{
+button {
+    padding: 15px 35px;
 
-    padding:15px 35px;
+    font-size: 18px;
 
-    font-size:18px;
+    border: none;
 
-    border:none;
+    border-radius: 12px;
 
-    border-radius:12px;
+    cursor: pointer;
 
-    cursor:pointer;
+    transition: 0.3s;
 
-    transition:.3s;
-
-    font-weight:bold;
-
+    font-weight: bold;
 }
 
-#btnArduino{
-
-    background:#2563eb;
-
-    color:white;
-
+button:hover {
+    transform: scale(1.05);
 }
 
-#btnCamera{
-
-    background:#16a34a;
-
-    color:white;
-
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
-button:hover{
-
-    transform:scale(1.05);
-
+#btnArduino {
+    background: #2563eb;
+    color: white;
 }
 
-.status{
-
-    display:flex;
-
-    justify-content:center;
-
-    gap:40px;
-
-    margin-top:25px;
-
-    flex-wrap:wrap;
-
+#btnCamera {
+    background: #16a34a;
+    color: white;
 }
 
-.status div{
 
-    background:#1e293b;
+/* =========================
+   STATUS
+========================= */
 
-    padding:12px 25px;
+.status {
+    display: flex;
 
-    border-radius:10px;
+    justify-content: center;
 
-    font-weight:bold;
+    gap: 40px;
 
-    border:2px solid #334155;
+    margin-top: 25px;
 
+    flex-wrap: wrap;
 }
 
-.principal{
+.status div {
+    background: #1e293b;
 
-    display:flex;
+    padding: 12px 25px;
 
-    justify-content:center;
+    border-radius: 10px;
 
-    align-items:flex-start;
+    font-weight: bold;
 
-    gap:50px;
-
-    margin-top:40px;
-
-    flex-wrap:wrap;
-
+    border: 2px solid #334155;
 }
 
-.camera{
 
-    width:320px;
+/* =========================
+   ÁREA PRINCIPAL
+========================= */
 
-    height:320px;
+.principal {
+    display: flex;
 
-    border-radius:15px;
+    justify-content: center;
 
-    overflow:hidden;
+    align-items: flex-start;
 
-    border:4px solid white;
+    gap: 50px;
 
-    background:black;
+    margin-top: 40px;
 
+    flex-wrap: wrap;
 }
 
-#webcam-container canvas{
 
-    width:320px;
+/* =========================
+   CÂMERA
+========================= */
 
-    height:320px;
+.camera {
+    width: 320px;
 
+    height: 320px;
+
+    border-radius: 15px;
+
+    overflow: hidden;
+
+    border: 4px solid white;
+
+    background: black;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
 }
 
-.resultado{
-
-    width:320px;
-
-    background:#1e293b;
-
-    border-radius:15px;
-
-    padding:20px;
-
-    text-align:center;
-
+#webcam-container {
+    width: 320px;
+    height: 320px;
 }
 
-.resultado h2{
-
-    margin-bottom:20px;
-
+#webcam-container canvas {
+    width: 320px;
+    height: 320px;
+    display: block;
 }
 
-#resultado{
 
-    font-size:55px;
+/* =========================
+   RESULTADO
+========================= */
 
-    color:#22c55e;
+.resultado {
+    width: 320px;
 
-    margin-bottom:20px;
+    min-height: 180px;
 
-    font-weight:bold;
+    background: #1e293b;
 
+    border-radius: 15px;
+
+    padding: 20px;
+
+    text-align: center;
 }
 
-#confianca{
-
-    font-size:24px;
-
+.resultado h2 {
+    margin-bottom: 20px;
 }
 
-.probabilidades{
+#resultado {
+    font-size: 32px;
 
-    width:80%;
+    color: #22c55e;
 
-    margin:50px auto;
+    margin-bottom: 20px;
 
+    font-weight: bold;
+
+    word-break: break-word;
 }
 
-.probabilidades h2{
 
-    text-align:center;
+/* =========================
+   PROBABILIDADES
+========================= */
 
-    margin-bottom:20px;
+.probabilidades {
+    width: 80%;
 
+    max-width: 900px;
+
+    margin: 50px auto;
 }
 
-#label-container{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:12px;
-
+.probabilidades h2 {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.classe{
+#label-container {
+    display: flex;
 
-    background:#334155;
+    flex-direction: column;
 
-    padding:12px;
-
-    border-radius:8px;
-
+    gap: 12px;
 }
 
-.barra{
+.classe {
+    background: #334155;
 
-    width:100%;
+    padding: 12px;
 
-    height:20px;
-
-    background:#0f172a;
-
-    border-radius:20px;
-
-    overflow:hidden;
-
-    margin-top:6px;
-
+    border-radius: 8px;
 }
 
-.preenchimento{
+.barra {
+    width: 100%;
 
-    height:100%;
+    height: 20px;
 
-    width:0%;
+    background: #0f172a;
 
-    background:#22c55e;
+    border-radius: 20px;
 
-    transition:.2s;
+    overflow: hidden;
 
+    margin-top: 6px;
 }
 
-.historico{
+.preenchimento {
+    height: 100%;
 
-    width:80%;
+    width: 0%;
 
-    margin:50px auto;
+    background: #22c55e;
 
+    transition: width 0.2s;
 }
 
-.historico h2{
 
-    text-align:center;
+/* =========================
+   HISTÓRICO
+========================= */
 
-    margin-bottom:20px;
+.historico {
+    width: 80%;
 
+    max-width: 900px;
+
+    margin: 50px auto;
 }
 
-#historico{
+.historico h2 {
+    text-align: center;
 
-    list-style:none;
-
+    margin-bottom: 20px;
 }
 
-#historico li{
-
-    background:#334155;
-
-    padding:10px;
-
-    margin-bottom:10px;
-
-    border-radius:8px;
-
+#historico {
+    list-style: none;
 }
+
+#historico li {
+    background: #334155;
+
+    padding: 10px;
+
+    margin-bottom: 10px;
+
+    border-radius: 8px;
+}
+
+
+/* =========================
+   RODAPÉ
+========================= */
 
 footer {
+    text-align: center;
 
-    text-align:center;
+    padding: 30px;
 
-    padding:30px;
+    color: #94a3b8;
+}
 
-    color:#94a3b8;
+
+/* =========================
+   CELULAR
+========================= */
+
+@media (max-width: 700px) {
+
+    header h1 {
+        font-size: 30px;
+    }
+
+    header p {
+        font-size: 15px;
+    }
+
+    .principal {
+        gap: 25px;
+    }
+
+    .probabilidades,
+    .historico {
+        width: 90%;
+    }
 }
