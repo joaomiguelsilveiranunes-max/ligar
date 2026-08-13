@@ -3,89 +3,116 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
 
-<title>Teachable Machine + Arduino</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="style.css">
+    <title>Teachable Machine + Arduino</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <link rel="stylesheet" href="style.css">
 
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+
+    <!-- Teachable Machine -->
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
 </head>
 
 <body>
 
-<header>
+    <header>
 
-<h1>🤖 Teachable Machine + Arduino</h1>
+        <h1>🤖 Teachable Machine + Arduino</h1>
 
-<p>
-Reconhecimento de imagens utilizando Inteligência Artificial
-</p>
+        <p>
+            Reconhecimento de imagens utilizando Inteligência Artificial
+        </p>
 
-</header>
-
-<section class="botoes">
-
-<button id="btnArduino" onclick="connectArduino()">
-🔌 Conectar Arduino
-</button>
-
-<button id="btnCamera" onclick="init()">
-📷 Iniciar Câmera
-</button>
-
-</section>
-
-<section class="principal">
-
-<div class="camera">
-
-<div id="webcam-container"></div>
-
-</div>
-
-<div class="resultado">
-
-<h2>Classe Detectada</h2>
-
-<div id="resultado">
-
-Nenhuma
-
-</div>
+    </header>
 
 
-</div>
+    <section class="botoes">
 
-</section>
+        <button
+            id="btnArduino"
+            onclick="connectArduino()"
+        >
+            🔌 Conectar Arduino
+        </button>
 
-<section class="probabilidades">
+        <button
+            id="btnCamera"
+            onclick="init()"
+        >
+            📷 Iniciar Câmera
+        </button>
 
-<h2>Probabilidade das Classes</h2>
+    </section>
 
-<div id="label-container"></div>
 
-</section>
+    <section class="status">
 
-<section class="historico">
+        <div id="statusArduino">
+            🔴 Arduino: desconectado
+        </div>
 
-<h2>Histórico</h2>
+        <div id="statusCamera">
+            ⚪ Câmera: desligada
+        </div>
 
-<ul id="historico"></ul>
+    </section>
 
-</section>
 
-<footer>
+    <section class="principal">
 
-Desenvolvido com TensorFlow.js + Teachable Machine + Arduino
+        <div class="camera">
 
-</footer>
+            <div id="webcam-container"></div>
 
-<script src="script.js"></script>
+        </div>
+
+
+        <div class="resultado">
+
+            <h2>Classe Detectada</h2>
+
+            <div id="resultado">
+                Nenhuma
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="probabilidades">
+
+        <h2>Probabilidade das Classes</h2>
+
+        <div id="label-container"></div>
+
+    </section>
+
+
+    <section class="historico">
+
+        <h2>Histórico</h2>
+
+        <ul id="historico"></ul>
+
+    </section>
+
+
+    <footer>
+
+        Desenvolvido com TensorFlow.js +
+        Teachable Machine + Arduino
+
+    </footer>
+
+
+    <script src="script.js"></script>
 
 </body>
 
