@@ -1,45 +1,63 @@
-const URL = "https://teachablemachine.withgoogle.com/models/d1OE97UJY/";
+// ==========================================
+// MODELO TEACHABLE MACHINE
+// ==========================================
 
-// ===============================
+const URL =
+    "https://teachablemachine.withgoogle.com/models/d1OE97UJY/";
+
+
+// ==========================================
 // VARIÁVEIS
-// ===============================
+// ==========================================
 
-let model;
-let webcam;
-let labelContainer;
-let maxPredictions;
+let model = null;
+
+let webcam = null;
+
+let labelContainer = null;
+
+let maxPredictions = 0;
 
 let port = null;
+
 let writer = null;
 
 let ultimaClasse = "";
+
 let cameraLigada = false;
 
-// ===============================
-// ELEMENTOS DA PÁGINA
-// ===============================
+let arduinoConectado = false;
 
-const webcamContainer = document.getElementById("webcam-container");
-const labelContainerElement = document.getElementById("label-container");
-const resultado = document.getElementById("resultado");
-const status = document.getElementById("status");
 
-// ===============================
-// STATUS
-// ===============================
+// ==========================================
+// ELEMENTOS HTML
+// ==========================================
 
-function mostrarStatus(texto) {
+const webcamContainer =
+    document.getElementById("webcam-container");
 
-    if (status) {
-        status.innerHTML = texto;
-    }
+const resultado =
+    document.getElementById("resultado");
 
-    console.log(texto);
-}
+const historico =
+    document.getElementById("historico");
 
-// ===============================
+const btnCamera =
+    document.getElementById("btnCamera");
+
+const btnArduino =
+    document.getElementById("btnArduino");
+
+const statusCamera =
+    document.getElementById("statusCamera");
+
+const statusArduino =
+    document.getElementById("statusArduino");
+
+
+// ==========================================
 // CONECTAR ARDUINO
-// ===============================
+// ==========================================
 
 async function connectArduino() {
 
@@ -47,33 +65,74 @@ async function connectArduino() {
 
         alert(
             "Seu navegador não suporta Web Serial.\n\n" +
-            "Use o Google Chrome ou Microsoft Edge."
+            "Use Google Chrome ou Microsoft Edge."
         );
 
         return;
     }
 
+
     try {
 
-        mostrarStatus("🔌 Escolha o Arduino na janela que apareceu...");
+        statusArduino.innerHTML =
+            "🟡 Arduino: escolhendo porta...";
 
-        port = await navigator.serial.requestPort();
+
+        port =
+            await navigator.serial.requestPort();
+
 
         await port.open({
             baudRate: 9600
         });
 
-        writer = port.writable.getWriter();
 
-        mostrarStatus("🟢 Arduino conectado!");
+        if (!port.writable) {
 
-        alert("Arduino conectado com sucesso!");
+            throw new Error(
+                "A porta serial não permite escrita."
+            );
+        }
 
-    } catch (erro) {
 
-        console.error("Erro ao conectar Arduino:", erro);
+        writer =
+            port.writable.getWriter();
 
-        mostrarStatus("🔴 Erro ao conectar Arduino.");
+
+        arduinoConectado = true;
+
+
+        statusArduino.innerHTML =
+            "🟢 Arduino: conectado";
+
+
+        btnArduino.innerHTML =
+            "🟢 Arduino Conectado";
+
+
+        btnArduino.disabled = true;
+
+
+        console.log(
+            "Arduino conectado com sucesso!"
+        );
+
+    }
+
+    catch (erro) {
+
+        console.error(
+            "Erro ao conectar Arduino:",
+            erro
+        );
+
+
+        arduinoConectado = false;
+
+
+        statusArduino.innerHTML =
+            "🔴 Arduino: erro na conexão";
+
 
         alert(
             "Não foi possível conectar ao Arduino.\n\n" +
@@ -82,134 +141,164 @@ async function connectArduino() {
     }
 }
 
-// ===============================
-// DESCONECTAR ARDUINO
-// ===============================
 
-async function disconnectArduino() {
+// ==========================================
+// ENVIAR COMANDO PARA ARDUINO
+// ==========================================
 
-    try {
-
-        if (writer) {
-            writer.releaseLock();
-            writer = null;
-        }
-
-        if (port) {
-            await port.close();
-            port = null;
-        }
-
-        mostrarStatus("🟡 Arduino desconectado.");
-
-    } catch (erro) {
-
-        console.error("Erro ao desconectar Arduino:", erro);
-
-    }
-}
-
-// ===============================
-// ENVIAR DADOS PARA ARDUINO
-// ===============================
-
-async function enviarArduino(valor) {
+async function enviarArduino(comando) {
 
     if (!writer) {
 
         console.log(
-            "Arduino não conectado. Comando não enviado:",
-            valor
+            "Arduino não conectado."
         );
 
         return;
     }
 
+
     try {
 
-        const encoder = new TextEncoder();
+        const encoder =
+            new TextEncoder();
+
 
         await writer.write(
-            encoder.encode(valor)
+            encoder.encode(comando)
         );
 
-        console.log("Arduino recebeu:", valor);
 
-    } catch (erro) {
+        console.log(
+            "Comando enviado para Arduino:",
+            comando.trim()
+        );
+
+    }
+
+    catch (erro) {
 
         console.error(
-            "Erro ao enviar para Arduino:",
+            "Erro enviando comando:",
             erro
         );
 
-        mostrarStatus("🔴 Erro ao enviar comando para o Arduino.");
+
+        arduinoConectado = false;
+
+
+        statusArduino.innerHTML =
+            "🔴 Arduino: conexão perdida";
     }
 }
 
-// ===============================
-// INICIAR CÂMERA E MODELO
-// ===============================
+
+// ==========================================
+// INICIAR CÂMERA
+// ==========================================
 
 async function init() {
 
+    if (cameraLigada) {
+
+        console.log(
+            "A câmera já está ligada."
+        );
+
+        return;
+    }
+
+
     try {
 
-        mostrarStatus("⏳ Carregando modelo...");
+        btnCamera.disabled = true;
 
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
 
-        model = await tmImage.load(
-            modelURL,
-            metadataURL
-        );
+        statusCamera.innerHTML =
+            "🟡 Câmera: carregando modelo...";
+
+
+        // ==================================
+        // CARREGAR MODELO
+        // ==================================
+
+        const modelURL =
+            URL + "model.json";
+
+        const metadataURL =
+            URL + "metadata.json";
+
+
+        model =
+            await tmImage.load(
+                modelURL,
+                metadataURL
+            );
+
 
         maxPredictions =
             model.getTotalClasses();
 
+
         console.log(
-            "Modelo carregado.",
-            "Classes:",
+            "Modelo carregado!"
+        );
+
+        console.log(
+            "Classes encontradas:",
             maxPredictions
         );
 
-        // ===============================
-        // CONFIGURAR WEBCAM
-        // ===============================
 
-        mostrarStatus("📷 Pedindo permissão para usar a câmera...");
+        // ==================================
+        // CRIAR WEBCAM
+        // ==================================
 
-        webcam = new tmImage.Webcam(
-            320,
-            320,
-            true
-        );
+        statusCamera.innerHTML =
+            "🟡 Câmera: pedindo permissão...";
+
+
+        webcam =
+            new tmImage.Webcam(
+                320,
+                320,
+                true
+            );
+
 
         await webcam.setup();
 
+
         await webcam.play();
+
 
         cameraLigada = true;
 
-        console.log("Câmera ligada!");
 
-        // ===============================
+        // ==================================
         // MOSTRAR CÂMERA
-        // ===============================
+        // ==================================
 
         webcamContainer.innerHTML = "";
+
 
         webcamContainer.appendChild(
             webcam.canvas
         );
 
-        // ===============================
-        // CRIAR ÁREA DAS CLASSES
-        // ===============================
 
-        labelContainerElement.innerHTML = "";
+        // ==================================
+        // CRIAR CLASSES
+        // ==================================
 
-        labelContainer = labelContainerElement;
+        labelContainer =
+            document.getElementById(
+                "label-container"
+            );
+
+
+        labelContainer.innerHTML = "";
+
 
         for (
             let i = 0;
@@ -220,64 +309,130 @@ async function init() {
             const div =
                 document.createElement("div");
 
-            labelContainer.appendChild(div);
+
+            div.className =
+                "classe";
+
+
+            div.innerHTML = `
+                <div>Carregando...</div>
+
+                <div class="barra">
+
+                    <div
+                        class="preenchimento"
+                    ></div>
+
+                </div>
+            `;
+
+
+            labelContainer.appendChild(
+                div
+            );
         }
 
-        mostrarStatus("🟢 Câmera funcionando! Modelo pronto.");
 
-        // ===============================
-        // COMEÇAR LOOP
-        // ===============================
+        // ==================================
+        // STATUS
+        // ==================================
 
-        window.requestAnimationFrame(loop);
+        statusCamera.innerHTML =
+            "🟢 Câmera: funcionando";
 
-    } catch (erro) {
+
+        btnCamera.innerHTML =
+            "🟢 Câmera Ligada";
+
+
+        // ==================================
+        // COMEÇAR RECONHECIMENTO
+        // ==================================
+
+        window.requestAnimationFrame(
+            loop
+        );
+
+
+        console.log(
+            "Reconhecimento iniciado!"
+        );
+
+    }
+
+    catch (erro) {
 
         console.error(
-            "Erro ao iniciar câmera/modelo:",
+            "Erro ao iniciar câmera:",
             erro
         );
 
+
         cameraLigada = false;
 
-        mostrarStatus(
-            "🔴 Não foi possível iniciar a câmera."
-        );
+
+        btnCamera.disabled = false;
+
+
+        btnCamera.innerHTML =
+            "📷 Iniciar Câmera";
+
+
+        statusCamera.innerHTML =
+            "🔴 Câmera: erro";
+
 
         alert(
             "Não foi possível iniciar a câmera.\n\n" +
-            "Verifique se você permitiu o acesso à câmera " +
-            "e se está usando Chrome ou Edge."
+            "Verifique se o navegador tem permissão " +
+            "para acessar a câmera."
         );
     }
 }
 
-// ===============================
+
+// ==========================================
 // LOOP
-// ===============================
+// ==========================================
 
 async function loop() {
 
-    if (!cameraLigada || !webcam) {
+    if (
+        !cameraLigada ||
+        !webcam
+    ) {
+
         return;
     }
+
 
     webcam.update();
 
+
     await predict();
 
-    window.requestAnimationFrame(loop);
+
+    window.requestAnimationFrame(
+        loop
+    );
 }
 
-// ===============================
+
+// ==========================================
 // PREDIÇÃO
-// ===============================
+// ==========================================
 
 async function predict() {
 
-    if (!model || !webcam) {
+    if (
+        !model ||
+        !webcam ||
+        !labelContainer
+    ) {
+
         return;
     }
+
 
     try {
 
@@ -286,12 +441,15 @@ async function predict() {
                 webcam.canvas
             );
 
+
         let maior = 0;
+
         let classe = "";
 
-        // ===============================
-        // VERIFICAR TODAS AS CLASSES
-        // ===============================
+
+        // ==================================
+        // ANALISAR CLASSES
+        // ==================================
 
         for (
             let i = 0;
@@ -299,111 +457,218 @@ async function predict() {
             i++
         ) {
 
-            const p = prediction[i];
+            const p =
+                prediction[i];
+
 
             const porcentagem =
-                (p.probability * 100).toFixed(1);
+                p.probability * 100;
 
-            if (
-                labelContainer &&
-                labelContainer.childNodes[i]
-            ) {
 
-                labelContainer.childNodes[i].innerHTML =
-                    p.className +
-                    " : " +
-                    porcentagem +
-                    "%";
+            const elemento =
+                labelContainer
+                    .childNodes[i];
+
+
+            if (elemento) {
+
+                elemento
+                    .children[0]
+                    .innerHTML =
+                        p.className +
+                        " : " +
+                        porcentagem
+                            .toFixed(1) +
+                        "%";
+
+
+                elemento
+                    .children[1]
+                    .children[0]
+                    .style.width =
+                        porcentagem + "%";
             }
+
+
+            // ==================================
+            // MAIOR PROBABILIDADE
+            // ==================================
 
             if (
                 p.probability > maior
             ) {
 
-                maior = p.probability;
+                maior =
+                    p.probability;
 
-                classe = p.className;
+                classe =
+                    p.className;
             }
         }
 
-        // ===============================
+
+        // ==================================
         // MOSTRAR RESULTADO
-        // ===============================
+        // ==================================
 
-        if (resultado) {
+        resultado.innerHTML =
+            classe +
+            "<br>" +
+            (maior * 100)
+                .toFixed(1) +
+            "%";
 
-            resultado.innerHTML =
-                "Classe: " +
-                classe +
-                "<br>Confiança: " +
-                (maior * 100).toFixed(1) +
-                "%";
-        }
 
-        // ===============================
-        // SÓ ACEITA ACIMA DE 90%
-        // ===============================
+        // ==================================
+        // EXIGIR 90%
+        // ==================================
 
         if (
-            maior > 0.90 &&
-            classe !== ultimaClasse
+            maior <= 0.90
         ) {
 
-            ultimaClasse = classe;
-
-            let comando = "";
-
-            // ===============================
-            // CLASSES → COMANDOS
-            // ===============================
-
-            if (classe === "magica da flor") {
-
-                comando = "1";
-            }
-
-            else if (classe === "magica da bola") {
-
-                comando = "2";
-            }
-
-            else if (classe === "magica do lenço") {
-
-                comando = "3";
-            }
-
-            else if (classe === "recomeço") {
-
-                comando = "4";
-            }
-
-            // ===============================
-            // ENVIAR PARA ARDUINO
-            // ===============================
-
-            if (comando !== "") {
-
-                console.log(
-                    "Classe detectada:",
-                    classe
-                );
-
-                console.log(
-                    "Comando enviado:",
-                    comando
-                );
-
-                await enviarArduino(
-                    comando + "\n"
-                );
-            }
+            return;
         }
 
-    } catch (erro) {
+
+        // ==================================
+        // EVITAR REPETIÇÃO
+        // ==================================
+
+        if (
+            classe === ultimaClasse
+        ) {
+
+            return;
+        }
+
+
+        ultimaClasse =
+            classe;
+
+
+        // ==================================
+        // COMANDOS
+        // ==================================
+
+        let comando = "";
+
+
+        if (
+            classe ===
+            "magica da flor"
+        ) {
+
+            comando = "1";
+        }
+
+        else if (
+            classe ===
+            "magica da bola"
+        ) {
+
+            comando = "2";
+        }
+
+        else if (
+            classe ===
+            "magica do lenço"
+        ) {
+
+            comando = "3";
+        }
+
+        else if (
+            classe ===
+            "recomeço"
+        ) {
+
+            comando = "4";
+        }
+
+
+        // ==================================
+        // ENVIAR PARA ARDUINO
+        // ==================================
+
+        if (
+            comando !== ""
+        ) {
+
+            console.log(
+                "Classe detectada:",
+                classe
+            );
+
+            console.log(
+                "Enviando comando:",
+                comando
+            );
+
+
+            await enviarArduino(
+                comando + "\n"
+            );
+
+
+            adicionarHistorico(
+                classe,
+                comando
+            );
+        }
+
+    }
+
+    catch (erro) {
 
         console.error(
             "Erro na previsão:",
             erro
+        );
+    }
+}
+
+
+// ==========================================
+// HISTÓRICO
+// ==========================================
+
+function adicionarHistorico(
+    classe,
+    comando
+) {
+
+    const item =
+        document.createElement("li");
+
+
+    const hora =
+        new Date()
+            .toLocaleTimeString();
+
+
+    item.innerHTML =
+        "🪄 " +
+        classe +
+        " → comando " +
+        comando +
+        " | " +
+        hora;
+
+
+    historico.prepend(
+        item
+    );
+
+
+    // Limitar histórico a 10 itens
+
+    while (
+        historico.children.length > 10
+    ) {
+
+        historico.removeChild(
+            historico.lastChild
         );
     }
 }
