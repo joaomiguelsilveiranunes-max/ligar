@@ -128,33 +128,28 @@ async function predict() {
         "Classe: " + classe +
         "<br>Confiança: " + (maior * 100).toFixed(1) + "%";
 
-    if (maior > 0.90 && classe != ultimaClasse) {
+    // Só envia se a confiança for maior que 90%
+    // e se for uma classe diferente da anterior
+    if (maior > 0.90 && classe !== ultimaClasse) {
 
         ultimaClasse = classe;
 
         let comando = "";
 
-        if (classe == "magica da flor
-") {
+        if (classe === "magica da flor") {
             comando = "1";
         }
-            if (classe == "magica da bola
-") {
+        else if (classe === "magica da bola") {
             comando = "2";
         }
-        if (classe == "magica do lenço
-") {
+        else if (classe === "magica do lenço") {
             comando = "3";
         }
-     }
-        if (classe == "recomeço
-") {
+        else if (classe === "recomeço") {
             comando = "4";
         }
 
-
-
-        if (comando != "") {
+        if (comando !== "") {
             console.log("Enviando:", comando);
             await enviarArduino(comando + "\n");
         }
