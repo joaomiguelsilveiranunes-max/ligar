@@ -2,7 +2,8 @@
 // CONFIGURAÇÃO DO MODELO
 // ==========================================
 
-const URL ="https://teachablemachine.withgoogle.com/models/d1OE97UJY/";
+const URL =
+    "https://teachablemachine.withgoogle.com/models/d1OE97UJY/";
 
 
 // ==========================================
