@@ -1,4 +1,13 @@
+// ==========================================
+// CONFIGURAÇÃO DO MODELO
+// ==========================================
+
 const URL ="https://teachablemachine.withgoogle.com/models/d1OE97UJY/";
+
+
+// ==========================================
+// VARIÁVEIS
+// ==========================================
 
 let model = null;
 let webcam = null;
@@ -9,6 +18,7 @@ let port = null;
 let writer = null;
 
 let ultimaClasse = "";
+
 let cameraLigada = false;
 let arduinoConectado = false;
 
@@ -40,10 +50,34 @@ const statusArduino =
 
 
 // ==========================================
+// VERIFICAÇÕES
+// ==========================================
+
+console.log("=================================");
+console.log("SCRIPT CARREGADO!");
+console.log("Teachable Machine:", typeof tmImage);
+console.log(
+    "Web Serial:",
+    "serial" in navigator
+);
+console.log(
+    "Câmera:",
+    !!(
+        navigator.mediaDevices &&
+        navigator.mediaDevices.getUserMedia
+    )
+);
+console.log("=================================");
+
+
+// ==========================================
 // CONECTAR ARDUINO
 // ==========================================
 
 async function connectArduino() {
+
+    console.log("Conectando Arduino...");
+
 
     if (!("serial" in navigator)) {
 
@@ -55,17 +89,31 @@ async function connectArduino() {
         return;
     }
 
+
     try {
 
         statusArduino.innerHTML =
             "🟡 Arduino: escolhendo porta...";
 
+
         port =
             await navigator.serial.requestPort();
+
+
+        console.log(
+            "Porta selecionada."
+        );
+
 
         await port.open({
             baudRate: 9600
         });
+
+
+        console.log(
+            "Porta aberta em 9600 baud."
+        );
+
 
         if (!port.writable) {
 
@@ -74,80 +122,111 @@ async function connectArduino() {
             );
         }
 
+
         writer =
             port.writable.getWriter();
 
+
         arduinoConectado = true;
+
 
         statusArduino.innerHTML =
             "🟢 Arduino: conectado";
 
+
         btnArduino.innerHTML =
             "🟢 Arduino Conectado";
 
+
         btnArduino.disabled = true;
 
+
         console.log(
-            "Arduino conectado!"
+            "Arduino conectado com sucesso!"
         );
 
-    } catch (erro) {
+    }
+
+    catch (erro) {
 
         console.error(
             "Erro ao conectar Arduino:",
             erro
         );
 
+
         arduinoConectado = false;
 
+
         statusArduino.innerHTML =
-            "🔴 Arduino: erro na conexão";
+            "🔴 Arduino: erro";
+
+
+        btnArduino.disabled = false;
+
+
+        btnArduino.innerHTML =
+            "🔌 Conectar Arduino";
+
 
         alert(
             "Não foi possível conectar ao Arduino.\n\n" +
-            "Verifique se ele está conectado."
+            "Verifique se ele está conectado e tente novamente."
         );
     }
 }
 
 
 // ==========================================
-// ENVIAR PARA ARDUINO
+// ENVIAR COMANDO PARA ARDUINO
 // ==========================================
 
 async function enviarArduino(comando) {
 
+    console.log(
+        "Enviando para Arduino:",
+        comando.trim()
+    );
+
+
     if (!writer) {
 
         console.log(
-            "Arduino não conectado."
+            "Arduino não está conectado."
         );
 
         return;
     }
+
 
     try {
 
         const encoder =
             new TextEncoder();
 
+
         await writer.write(
             encoder.encode(comando)
         );
 
+
         console.log(
-            "Enviado para Arduino:",
+            "Comando enviado com sucesso:",
             comando.trim()
         );
 
-    } catch (erro) {
+    }
+
+    catch (erro) {
 
         console.error(
-            "Erro ao enviar para Arduino:",
+            "Erro ao enviar comando:",
             erro
         );
 
+
         arduinoConectado = false;
+
 
         statusArduino.innerHTML =
             "🔴 Arduino: conexão perdida";
@@ -161,6 +240,11 @@ async function enviarArduino(comando) {
 
 async function init() {
 
+    console.log(
+        "Botão Iniciar Câmera pressionado."
+    );
+
+
     if (cameraLigada) {
 
         console.log(
@@ -170,17 +254,42 @@ async function init() {
         return;
     }
 
+
     try {
 
         btnCamera.disabled = true;
+
 
         statusCamera.innerHTML =
             "🟡 Câmera: carregando modelo...";
 
 
-        // ==================================
-        // CARREGAR MODELO
-        // ==================================
+        // Verificar biblioteca
+
+        if (
+            typeof tmImage === "undefined"
+        ) {
+
+            throw new Error(
+                "A biblioteca Teachable Machine não foi carregada."
+            );
+        }
+
+
+        // Verificar câmera
+
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+
+            throw new Error(
+                "A câmera não está disponível."
+            );
+        }
+
+
+        // URLs do modelo
 
         const modelURL =
             URL + "model.json";
@@ -188,18 +297,29 @@ async function init() {
         const metadataURL =
             URL + "metadata.json";
 
+
+        console.log(
+            "Carregando modelo..."
+        );
+
+
+        // Carregar modelo
+
         model =
             await tmImage.load(
                 modelURL,
                 metadataURL
             );
 
+
         maxPredictions =
             model.getTotalClasses();
+
 
         console.log(
             "Modelo carregado!"
         );
+
 
         console.log(
             "Número de classes:",
@@ -207,12 +327,11 @@ async function init() {
         );
 
 
-        // ==================================
-        // CONFIGURAR CÂMERA
-        // ==================================
+        // Pedir câmera
 
         statusCamera.innerHTML =
             "🟡 Câmera: pedindo permissão...";
+
 
         webcam =
             new tmImage.Webcam(
@@ -221,34 +340,46 @@ async function init() {
                 true
             );
 
+
         await webcam.setup();
 
+
+        console.log(
+            "Permissão da câmera concedida."
+        );
+
+
         await webcam.play();
+
+
+        console.log(
+            "Câmera ligada."
+        );
+
 
         cameraLigada = true;
 
 
-        // ==================================
-        // MOSTRAR CÂMERA
-        // ==================================
+        // Mostrar câmera
 
         webcamContainer.innerHTML = "";
+
 
         webcamContainer.appendChild(
             webcam.canvas
         );
 
 
-        // ==================================
-        // CRIAR PROBABILIDADES
-        // ==================================
+        // Criar probabilidades
 
         labelContainer =
             document.getElementById(
                 "label-container"
             );
 
+
         labelContainer.innerHTML = "";
+
 
         for (
             let i = 0;
@@ -259,8 +390,10 @@ async function init() {
             const div =
                 document.createElement("div");
 
+
             div.className =
                 "classe";
+
 
             div.innerHTML = `
                 <div>Carregando...</div>
@@ -270,51 +403,62 @@ async function init() {
                 </div>
             `;
 
+
             labelContainer.appendChild(
                 div
             );
         }
 
 
-        // ==================================
-        // STATUS
-        // ==================================
+        // Status
 
         statusCamera.innerHTML =
             "🟢 Câmera: funcionando";
+
 
         btnCamera.innerHTML =
             "🟢 Câmera Ligada";
 
 
-        // ==================================
-        // COMEÇAR LOOP
-        // ==================================
+        // Iniciar reconhecimento
 
         window.requestAnimationFrame(
             loop
         );
 
-    } catch (erro) {
+
+        console.log(
+            "Reconhecimento iniciado!"
+        );
+
+    }
+
+    catch (erro) {
 
         console.error(
             "Erro ao iniciar câmera:",
             erro
         );
 
+
         cameraLigada = false;
 
+
         btnCamera.disabled = false;
+
 
         btnCamera.innerHTML =
             "📷 Iniciar Câmera";
 
+
         statusCamera.innerHTML =
             "🔴 Câmera: erro";
 
+
         alert(
             "Não foi possível iniciar a câmera.\n\n" +
-            "Verifique se o navegador permitiu o acesso à câmera."
+            "Erro: " +
+            erro.message
         );
     }
 }
@@ -334,9 +478,24 @@ async function loop() {
         return;
     }
 
-    webcam.update();
 
-    await predict();
+    try {
+
+        webcam.update();
+
+
+        await predict();
+
+    }
+
+    catch (erro) {
+
+        console.error(
+            "Erro no loop:",
+            erro
+        );
+    }
+
 
     window.requestAnimationFrame(
         loop
@@ -345,7 +504,7 @@ async function loop() {
 
 
 // ==========================================
-// PREDIÇÃO
+// RECONHECIMENTO
 // ==========================================
 
 async function predict() {
@@ -359,6 +518,7 @@ async function predict() {
         return;
     }
 
+
     try {
 
         const prediction =
@@ -366,13 +526,14 @@ async function predict() {
                 webcam.canvas
             );
 
+
         let maior = 0;
         let classe = "";
 
 
-        // ==================================
+        // ======================================
         // ANALISAR CLASSES
-        // ==================================
+        // ======================================
 
         for (
             let i = 0;
@@ -383,12 +544,14 @@ async function predict() {
             const p =
                 prediction[i];
 
+
             const porcentagem =
                 p.probability * 100;
 
+
             const elemento =
-                labelContainer
-                    .children[i];
+                labelContainer.children[i];
+
 
             if (elemento) {
 
@@ -398,15 +561,15 @@ async function predict() {
                     porcentagem.toFixed(1) +
                     "%";
 
-                elemento
-                    .children[1]
+
+                elemento.children[1]
                     .children[0]
                     .style.width =
                     porcentagem + "%";
             }
 
 
-            // Maior probabilidade
+            // Encontrar maior probabilidade
 
             if (
                 p.probability > maior
@@ -421,9 +584,9 @@ async function predict() {
         }
 
 
-        // ==================================
+        // ======================================
         // MOSTRAR RESULTADO
-        // ==================================
+        // ======================================
 
         resultado.innerHTML =
             classe +
@@ -432,95 +595,178 @@ async function predict() {
             "%";
 
 
-        // ==================================
-        // PRECISA TER 90%
-        // ==================================
+        // ======================================
+        // PRECISA DE 90%
+        // ======================================
 
         if (
-            maior <= 0.90
+            maior < 0.90
         ) {
 
             return;
         }
 
 
-        // ==================================
-        // NÃO REPETIR
-        // ==================================
+        // ======================================
+        // NORMALIZAR CLASSE
+        // ======================================
 
-        if (
-            classe === ultimaClasse
-        ) {
+        const classeNormalizada =
+            classe
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(
+                    /[\u0300-\u036f]/g,
+                    ""
+                );
 
-            return;
-        }
 
-        ultimaClasse =
-            classe;
+        console.log(
+            "Classe original:",
+            classe
+        );
 
 
-        // ==================================
+        console.log(
+            "Classe normalizada:",
+            classeNormalizada
+        );
+
+
+        console.log(
+            "Confiança:",
+            (maior * 100).toFixed(1) + "%"
+        );
+
+
+        // ======================================
         // DEFINIR COMANDO
-        // ==================================
+        // ======================================
 
         let comando = "";
 
 
+        // FLOR
+
         if (
-            classe === "magica da flor"
+            classeNormalizada ===
+            "magica da flor"
         ) {
 
             comando = "1";
+        }
 
-        } else if (
-            classe === "magica da bola"
+
+        // BOLA
+
+        else if (
+            classeNormalizada ===
+            "magica da bola"
         ) {
 
             comando = "2";
+        }
 
-        } else if (
-            classe === "lenco"
+
+        // LENÇO
+
+        else if (
+            classeNormalizada ===
+            "lenco"
         ) {
 
             comando = "3";
+        }
 
-        } else if (
-            classe === "recomeçar"
+
+        // RECOMEÇO
+
+        else if (
+            classeNormalizada ===
+            "recomeco"
         ) {
 
             comando = "4";
         }
 
 
-        // ==================================
-        // ENVIAR PARA ARDUINO
-        // ==================================
+        // ======================================
+        // MOSTRAR COMANDO
+        // ======================================
+
+        console.log(
+            "Comando escolhido:",
+            comando
+        );
+
+
+        // Classe não reconhecida
 
         if (
-            comando !== ""
+            comando === ""
         ) {
 
             console.log(
-                "Classe detectada:",
-                classe
+                "Classe sem comando correspondente."
             );
 
-            console.log(
-                "Comando enviado:",
-                comando
-            );
-
-            await enviarArduino(
-                comando + "\n"
-            );
-
-            adicionarHistorico(
-                classe,
-                comando
-            );
+            return;
         }
 
-    } catch (erro) {
+
+        // ======================================
+        // NÃO REPETIR
+        // ======================================
+
+        if (
+            classeNormalizada ===
+            ultimaClasse
+        ) {
+
+            return;
+        }
+
+
+        ultimaClasse =
+            classeNormalizada;
+
+
+        // ======================================
+        // ENVIAR ARDUINO
+        // ======================================
+
+        console.log(
+            "================================="
+        );
+
+
+        console.log(
+            "ENVIANDO PARA ARDUINO:",
+            comando
+        );
+
+
+        console.log(
+            "================================="
+        );
+
+
+        await enviarArduino(
+            comando + "\n"
+        );
+
+
+        // Histórico
+
+        adicionarHistorico(
+            classe,
+            comando
+        );
+
+    }
+
+    catch (erro) {
 
         console.error(
             "Erro na previsão:",
@@ -539,11 +785,18 @@ function adicionarHistorico(
     comando
 ) {
 
+    if (!historico) {
+        return;
+    }
+
+
     const item =
         document.createElement("li");
 
+
     const hora =
         new Date().toLocaleTimeString();
+
 
     item.innerHTML =
         "🪄 " +
@@ -553,12 +806,13 @@ function adicionarHistorico(
         " | " +
         hora;
 
+
     historico.prepend(
         item
     );
 
 
-    // Máximo de 10 registros
+    // Limitar a 10 registros
 
     while (
         historico.children.length > 10
