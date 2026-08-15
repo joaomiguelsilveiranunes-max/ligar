@@ -479,7 +479,7 @@ async function predict() {
             comando = "2";
 
         } else if (
-            classe === "lenço"
+            classe === "lenco"
         ) {
 
             comando = "3";
