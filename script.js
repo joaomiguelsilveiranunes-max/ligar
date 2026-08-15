@@ -479,13 +479,13 @@ async function predict() {
             comando = "2";
 
         } else if (
-            classe === "magica do lenço"
+            classe === "lenço"
         ) {
 
             comando = "3";
 
         } else if (
-            classe === "recomeço"
+            classe === "recomeçar"
         ) {
 
             comando = "4";
